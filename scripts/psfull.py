@@ -1,14 +1,13 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import rospy
 from sensor_msgs.msg import Joy
-from std_msgs.msg import Int64MultiArray
 
 
 class joystick:
 
     def __init__(self):
-        rospy.init_node('cmd_node', anonymous=False)
+        rospy.init_node('swerve_node', anonymous=False)
         self.sub_joy = rospy.Subscriber("joy", Joy, self.joy)
 
     def joy(self, data):
@@ -41,45 +40,29 @@ class joystick:
         #     ef = LY - 0
         #     er = LX - 0
         #     initialize = 1
-        pub = rospy.Publisher('cmd_vel', Int64MultiArray, queue_size=10)
-        cmd_msg = Int64MultiArray()
-        
-        rate = rospy.Rate(150)
 
         #mapping axes values
-        f = int(translate(self, LY, 0.1, 1, 0, 50))
-        b = int(translate(self, LY, -0.1, -1, 0, 50))
-        l = int(translate(self, LX, 0.1, 1, 0, 50))
-        r = int(translate(self, LX, -0.1, -1, 0, 50))
+        f = int(translate(self, LY, 0.1, 1, 0, 255))
+        b = int(translate(self, LY, -0.1, -1, 0, 255))
+        l = int(translate(self, LX, 0.1, 1, 0, 255)) #err 28-pwm
+        r = int(translate(self, LX, -0.1, -1, 0, 255)) #err 28-pwm
 
         #rospy.loginfo(LX)
-        f = sorted([0, f, 50])[1]
-        b = sorted([0, b, 50])[1]
-        l = sorted([0, l, 50])[1]
-        r = sorted([0, r, 50])[1]
+        f = sorted([0, f, 255])[1]
+        b = sorted([0, b, 255])[1]
+        l = sorted([0, l, 255])[1]
+        r = sorted([0, r, 255])[1]
 
-        cmd_msg.data = [l,r,f,b]
-
-        if  (l>=0):
+        if  (l>0):                 #(LX > 0.1):
             print("LX-LEFT", l)
-            pub.publish(cmd_msg)
-
-        if (r>=0):
+        if (r>0):                  #(LX < 0.2):
             print("LX-RIGHT", r)
-            pub.publish(cmd_msg)
-
-        if (f>=0):
+        if (f>0):                  #(LY > 0.1):
             print("LY-FORW", f)
-            pub.publish(cmd_msg)
-
-        if (b>=0):
+        if (b>0):                  #(LY < 0.2):
             print("LY-BACK", b)
-            pub.publish(cmd_msg)
-
-
 
         #print(f,b,r,l)
-        
 
 if __name__ == "__main__":
 
@@ -94,14 +77,3 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         #rospy.loginfo(LX)
         rate.sleep()
-    while rospy.is_shutdown():
-        pub = rospy.Publisher('cmd_vel', Int64MultiArray, queue_size=10)
-        cmd_msg = Int64MultiArray()
-        rate = rospy.Rate(150)
-        l=0
-        r=0
-        f=0
-        b=0
-        cmd_msg.data = [l,r,f,b]
-        print("no interface")
-        pub.publish(cmd_msg)
